@@ -1,5 +1,6 @@
 import React from "react";
 import DealList from "./DealList";
+import PerformanceMetrics from "./PerformanceMetrics";
 import PipelineFunnel from "./PipelineFunnel";
 
 const PipelineDashboard: React.FC = () => {
@@ -24,9 +25,7 @@ const PipelineDashboard: React.FC = () => {
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
               Performance Metrics
             </h2>
-            <p className="text-gray-600">
-              Key stats cards will be displayed here.
-            </p>
+            <PerformanceMetrics />
           </div>
 
           {/* Deal List Section */}

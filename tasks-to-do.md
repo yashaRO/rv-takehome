@@ -26,12 +26,12 @@
 
 ## Frontend Development
 
-- [ ] Build the Pipeline Overview dashboard.
-  - [ ] Create a visual funnel showing deals by stage.
-  - [ ] Implement a sortable deal list with search functionality.
-  - [ ] Display key metrics:
-    - [ ] Total pipeline value.
-    - [ ] Win rate.
+- [x] Build the Pipeline Overview dashboard.
+  - [x] Create a visual funnel showing deals by stage.
+  - [x] Implement a sortable deal list with search functionality.
+  - [x] Display key metrics:
+    - [x] Total pipeline value.
+    - [x] Win rate.
 
 ## Testing
 
