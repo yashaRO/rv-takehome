@@ -47,4 +47,4 @@
 
 ## Sample Data
 
-- [ ] Load and display sample data in the UI.
+- [x] Load and display sample data in the UI.

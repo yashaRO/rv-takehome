@@ -2,37 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { initializeDataSource } from "../../../data-source";
 import { Deal } from "../../../lib/entities/Deal";
-
-// Define Zod schema for DealData
-const DealDataSchema = z.object({
-  deal_id: z.string(),
-  company_name: z.string(),
-  contact_name: z.string(),
-  transportation_mode: z.enum(["trucking", "rail", "ocean", "air"]),
-  stage: z.enum([
-    "prospect",
-    "qualified",
-    "proposal",
-    "negotiation",
-    "closed_won",
-    "closed_lost",
-  ]),
-  value: z.number().positive(),
-  probability: z.number().min(0).max(100),
-  created_date: z.string().refine((date) => !isNaN(Date.parse(date)), {
-    message: "Invalid date format for created_date",
-  }),
-  updated_date: z.string().refine((date) => !isNaN(Date.parse(date)), {
-    message: "Invalid date format for updated_date",
-  }),
-  expected_close_date: z.string().refine((date) => !isNaN(Date.parse(date)), {
-    message: "Invalid date format for expected_close_date",
-  }),
-  sales_rep: z.string(),
-  origin_city: z.string(),
-  destination_city: z.string(),
-  cargo_type: z.string().optional(),
-});
+import { DealDataSchema } from "../../../lib/types/deal-validation";
 
 export async function POST(request: NextRequest) {
   try {
