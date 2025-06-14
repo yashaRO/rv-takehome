@@ -1,18 +1,36 @@
 // Mock Next.js server components before importing
-jest.mock("next/server", () => ({
-  NextRequest: jest.fn(),
-  NextResponse: {
+jest.mock("next/server", () => {
+  const mockNextRequest = jest.fn().mockImplementation((url, options) => ({
+    url,
+    method: options?.method || "GET",
+    json: jest.fn().mockImplementation(() => {
+      try {
+        return Promise.resolve(JSON.parse(options?.body || "{}"));
+      } catch (error) {
+        return Promise.reject(new Error("Invalid JSON"));
+      }
+    }),
+    text: jest.fn().mockResolvedValue(options?.body || ""),
+  }));
+
+  const mockNextResponse = {
     json: jest.fn((data, options) => ({
       json: async () => data,
       status: options?.status || 200,
     })),
-  },
-}));
+  };
+
+  return {
+    NextRequest: mockNextRequest,
+    NextResponse: mockNextResponse,
+  };
+});
 
 // Mock the data source and repository
 jest.mock("../../data-source");
-jest.mock("../../lib/entities/Deal");
+jest.mock("../../lib/entities/deals/Deal");
 
+import { NextRequest } from "next/server";
 import { GET, POST } from "../../app/api/deals/route";
 import { initializeDataSource } from "../../data-source";
 
@@ -54,6 +72,7 @@ describe("/api/deals", () => {
     };
 
     mockInitializeDataSource.mockResolvedValue(mockDataSource);
+    jest.clearAllMocks();
   });
 
   afterEach(() => {

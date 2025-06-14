@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { initializeDataSource } from "../../../data-source";
-import { Deal } from "../../../lib/entities/Deal";
+import { Deal } from "../../../lib/entities/deals/Deal";
 
 const sampleDeals = [
   {

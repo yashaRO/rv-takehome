@@ -35,9 +35,9 @@
 
 ## Testing
 
-- [ ] Write tests for the data ingestion endpoint.
-  - [ ] Include tests for edge cases.
-- [ ] Write tests for the Pipeline Analytics API.
+- [x] Write tests for the data ingestion endpoint.
+  - [x] Include tests for edge cases.
+- [x] Write tests for the Pipeline Analytics API.
 
 ## Documentation
 

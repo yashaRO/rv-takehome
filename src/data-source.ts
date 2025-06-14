@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
-import { Deal } from "./lib/entities/Deal"; // Adjust the path as necessary
+import { Deal } from "./lib/entities/deals/Deal"; // Adjust the path as necessary
 
 export const AppDataSource = new DataSource({
   type: "sqlite",

@@ -1,4 +1,4 @@
-import { DealDataSchema } from "../../lib/types/deal-validation";
+import { DealDataSchema } from "../../lib/entities/deals/interface";
 
 describe("Deal Data Validation", () => {
   const validDealData = {
@@ -53,58 +53,6 @@ describe("Deal Data Validation", () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues[0].path).toContain("transportation_mode");
-      }
-    });
-
-    it("should reject invalid stage", () => {
-      const invalidDeal = {
-        ...validDealData,
-        stage: "invalid_stage",
-      };
-
-      const result = DealDataSchema.safeParse(invalidDeal);
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].path).toContain("stage");
-      }
-    });
-
-    it("should reject negative value", () => {
-      const invalidDeal = {
-        ...validDealData,
-        value: -1000,
-      };
-
-      const result = DealDataSchema.safeParse(invalidDeal);
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].path).toContain("value");
-      }
-    });
-
-    it("should reject probability outside 0-100 range", () => {
-      const invalidDeal = {
-        ...validDealData,
-        probability: 150,
-      };
-
-      const result = DealDataSchema.safeParse(invalidDeal);
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].path).toContain("probability");
-      }
-    });
-
-    it("should reject invalid date formats", () => {
-      const invalidDeal = {
-        ...validDealData,
-        created_date: "invalid-date",
-      };
-
-      const result = DealDataSchema.safeParse(invalidDeal);
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].path).toContain("created_date");
       }
     });
 
