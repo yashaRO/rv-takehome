@@ -37,6 +37,9 @@ const DealList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<SortField>("created_date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [selectedDeals, setSelectedDeals] = useState<Set<number>>(new Set());
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newSalesRep, setNewSalesRep] = useState("");
 
   useEffect(() => {
     const fetchDeals = async () => {
@@ -68,9 +71,20 @@ const DealList: React.FC = () => {
     return deals;
   }, [pipelineData]);
 
+  // Calculate unique sales reps
+  const uniqueSalesReps = useMemo(() => {
+    const salesRepsSet = new Set<string>();
+    allDeals.forEach((deal) => {
+      if (deal.sales_rep && deal.sales_rep.trim()) {
+        salesRepsSet.add(deal.sales_rep.trim());
+      }
+    });
+    return Array.from(salesRepsSet).sort();
+  }, [allDeals]);
+
   // Filter and sort deals
   const filteredAndSortedDeals = useMemo(() => {
-    let filtered = allDeals.filter(
+    const filtered = allDeals.filter(
       (deal) =>
         deal.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         deal.contact_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -118,6 +132,64 @@ const DealList: React.FC = () => {
     }
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allDealIds = new Set(filteredAndSortedDeals.map(deal => deal.id));
+      setSelectedDeals(allDealIds);
+    } else {
+      setSelectedDeals(new Set());
+    }
+  };
+
+  const handleSelectDeal = (dealId: number, checked: boolean) => {
+    const newSelectedDeals = new Set(selectedDeals);
+    if (checked) {
+      newSelectedDeals.add(dealId);
+    } else {
+      newSelectedDeals.delete(dealId);
+    }
+    setSelectedDeals(newSelectedDeals);
+  };
+
+  const isAllSelected = filteredAndSortedDeals.length > 0 && 
+    filteredAndSortedDeals.every(deal => selectedDeals.has(deal.id));
+  const isIndeterminate = selectedDeals.size > 0 && !isAllSelected;
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+    setNewSalesRep("");
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setNewSalesRep("");
+  };
+
+  const handleBulkUpdateSalesRep = async () => {
+    if (!newSalesRep.trim() || selectedDeals.size === 0 || !pipelineData) return;
+
+    try {
+      // Here you would typically make an API call to update the deals
+      // For now, we'll just update the local state
+      const updatedData = { ...pipelineData };
+      Object.values(updatedData.stageAnalytics).forEach((stageData) => {
+        stageData.deals.forEach((deal) => {
+          if (selectedDeals.has(deal.id)) {
+            deal.sales_rep = newSalesRep.trim();
+          }
+        });
+      });
+      setPipelineData(updatedData);
+
+      // Clear selection and close modal
+      setSelectedDeals(new Set());
+      handleCloseModal();
+    } catch (error) {
+      console.error("Failed to update sales rep:", error);
+      // You could add error handling here
+    }
+  };
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -159,6 +231,21 @@ const DealList: React.FC = () => {
 
   return (
     <div className="space-y-4">
+      {/* Bulk Actions */}
+      <div className="flex justify-between items-center">
+        <button
+          onClick={handleOpenModal}
+          disabled={selectedDeals.size === 0}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            selectedDeals.size === 0
+              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+              : "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          }`}
+        >
+          {`Change Sales Rep${selectedDeals.size ? ` (${selectedDeals.size} selected)` : ''}`}
+        </button>
+      </div>
+
       {/* Search Bar */}
       <div className="flex justify-between items-center">
         <div className="relative flex-1 max-w-md">
@@ -167,7 +254,7 @@ const DealList: React.FC = () => {
             placeholder="Search deals..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="text-black w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <svg
@@ -195,6 +282,17 @@ const DealList: React.FC = () => {
         <table className="min-w-full bg-white border border-gray-200 rounded-lg">
           <thead className="bg-gray-50">
             <tr>
+              <th className="px-6 py-3 text-left">
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  ref={(input) => {
+                    if (input) input.indeterminate = isIndeterminate;
+                  }}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+              </th>
               {[
                 { key: "deal_id", label: "Deal ID" },
                 { key: "company_name", label: "Company" },
@@ -226,6 +324,14 @@ const DealList: React.FC = () => {
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredAndSortedDeals.map((deal) => (
               <tr key={deal.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <input
+                    type="checkbox"
+                    checked={selectedDeals.has(deal.id)}
+                    onChange={(e) => handleSelectDeal(deal.id, e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {deal.deal_id}
                 </td>
@@ -268,6 +374,82 @@ const DealList: React.FC = () => {
       {filteredAndSortedDeals.length === 0 && (
         <div className="text-center py-8 text-gray-500">
           No deals found matching your search criteria.
+        </div>
+      )}
+
+      {/* Modal for bulk sales rep update */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Change Sales Representative
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Update the sales representative for {selectedDeals.size} selected deals.
+            </p>
+            <div className="mb-6">
+              <label htmlFor="salesRep" className="block text-sm font-medium text-gray-700 mb-2">
+                New Sales Representative
+              </label>
+              <div className="space-y-3">
+                {/* Dropdown for existing sales reps */}
+                {uniqueSalesReps.length > 0 && (
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">
+                      Select from existing:
+                    </label>
+                    <select
+                      value={uniqueSalesReps.includes(newSalesRep) ? newSalesRep : ""}
+                      onChange={(e) => setNewSalesRep(e.target.value)}
+                      className="text-black w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                    >
+                      <option value="">-- Select existing sales rep --</option>
+                      {uniqueSalesReps.map((salesRep) => (
+                        <option key={salesRep} value={salesRep}>
+                          {salesRep}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                
+                {/* Text input for custom value */}
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Or enter new name:
+                  </label>
+                  <input
+                    type="text"
+                    id="salesRep"
+                    value={newSalesRep}
+                    onChange={(e) => setNewSalesRep(e.target.value)}
+                    placeholder="Enter sales representative name"
+                    className="text-black w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    autoFocus
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={handleCloseModal}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkUpdateSalesRep}
+                disabled={!newSalesRep.trim()}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  !newSalesRep.trim()
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                }`}
+              >
+                Update Sales Rep
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
